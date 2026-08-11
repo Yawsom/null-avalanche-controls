@@ -1,0 +1,22 @@
+# Paper PDF
+*.pdf
+
+# Generated experiment outputs
+data/
+plots/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Matplotlib cache
+.mplcache/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
