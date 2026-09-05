@@ -1,382 +1,118 @@
-> **Feasibility audit, 5 September 2026:** The multi-seed study in
-> [feasibility/REPORT.md](feasibility/REPORT.md) reproduces the numerical headline
-> below but finds that its power-law/criticality interpretation is not supported
-> by the stronger checks. Read that report before citing the original claims.
-> The original experiment descriptions below are retained as the audit baseline.
+# Null avalanche controls
 
-This repository holds two separate experiments that share a theme. Both ask
-whether an analysis method reports structure in data that has none.
+An ongoing methods study with reproducible preliminary results on how bin width,
+shared activity fluctuations and analysis choices affect neuronal avalanche
+statistics.
 
-1. **[Power-Law Time Series Avalanche Experiment](#power-law-time-series-avalanche-experiment)**
-   (`simulate.py`, `analyze.py`) — a similarity criterion applied to IID data.
-2. **[Beggs-Plenz Replication on Null Data](#beggs-plenz-replication-on-null-data)**
-   (`bp_simulate.py`, `bp_analyze.py`, `bp_validate.py`, `bp_compare.py`) — the
-   neuronal avalanche method of Beggs & Plenz 2003 applied to non-propagating data.
+**Current finding:** bin width strongly changes measured branching estimates and
+fitted size exponents in the simulated systems. Whether the full bin-width
+relationship can distinguish shared drive from propagation remains an open
+research question. No experimental neural recordings have been analyzed here.
 
----
+## Findings so far
 
-# Power-Law Time Series Avalanche Experiment
+The completed [feasibility audit](feasibility/REPORT.md) includes 280 short
+synthetic recordings across seven models and six additional 70-hour mixed-drive
+recordings, with independent seeds, distribution-fitting checks and timing
+surrogates.
 
-Does a completely independent random process still look correlated when you
-apply a neuroscience-style similarity criterion across neighbouring cells and
-consecutive time bins?
+- **Binning changes the measured signature.** In the six long mixed-drive runs,
+  moving from the repository's rounded inter-event-interval (IEI) rule to 10 ms
+  changes mean sigma from 0.607 to 0.985 and the regression exponent from 2.022
+  to 1.524.
+- **Estimator choice changes the interpretation.** At 10 ms, the mean
+  maximum-likelihood exponent is 1.267, rather than the regression value 1.524.
+  The exact finite-support power law is rejected in all six long runs. Beating
+  an exponential in a relative comparison does not establish an adequate power
+  law. These checks do not exclude every form of approximate scaling.
+- **Shared drive produces dependence without electrode-to-electrode
+  propagation.** The bursty nulls contain correlations and refractory history;
+  they are not unstructured or temporally independent data.
+- **The tested timing controls do not identify propagation.** Shuffling changes
+  shared-drive statistics too, and interval-jitter rejection can reflect burst
+  boundaries or refractory structure under the tested nulls.
 
-The generator here has **no spatial or temporal dependence at all**. Every
-value in the `n x n` grid, at every iteration, is drawn independently. So any
-"propagation" the analysis reports is false by construction. What the
-experiment measures is how strongly the choice of marginal distribution
-(truncated power law vs Gaussian) inflates the rate of these feigned
-correlations, and whether the false links assemble into avalanche-like events.
+These findings establish a bin-width relationship in the tested models. They do
+not establish that biological activity is or is not critical. The report gives
+fit definitions, uncertainty, calibration results and model limitations.
 
-## Setup
+![Regression and likelihood estimates in the feasibility audit](feasibility/results/estimator_gap.png)
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+## Research question and next study
 
-## Simulate
+**How much of the bin-width dependence can be predicted from event rate, shared
+fluctuations, refractoriness and observation alone, and when does adding
+propagation improve predictions on held-out data?**
 
-```bash
-python simulate.py --mode powerlaw --n 16 --x 200 --seed 42 --out data/timeseries_powerlaw.csv
-python simulate.py --mode gaussian --n 16 --x 200 --seed 42 --out data/timeseries_gaussian.csv
-```
+The [prospective research plan](feasibility/RESEARCH_PLAN.md) proposes an analytic
+baseline, matched simulations with and without propagation, and subsequent
+validation on held-out neural recordings. The target is the whole bin-width
+curve and its underlying distributions; matching sigma = 1 and tau = 1.5 is not
+the success criterion. These proposed experiments have not yet been run.
 
-Power-law mode samples the truncated PDF `p(x) ∝ x^a` on `[xmin, xmax]`
-(defaults `a = -2`, `xmin = 1`, `xmax = 100`) by inverse-CDF transform of a
-uniform draw. Gaussian mode samples `N(mu, sigma)` (defaults `50`, `15`) and
-clips to `[0, 100]`.
+Binning effects and shared-drive explanations already have substantial precedent.
+The [literature audit](feasibility/LITERATURE.md) identifies the closest work and
+why an additional contribution needs to demonstrate useful prediction or
+quantify where mechanisms cannot be distinguished. Publication viability for
+this refined question remains to be established.
 
-Output is long form, with every frame retained:
+## Start here
 
-```text
-iteration,row,col,value
-0,0,0,12.400000
-```
-
-### Simulation flags
-
-| Flag | Default | Meaning |
-| --- | --- | --- |
-| `--mode` | `powerlaw` | `powerlaw` or `gaussian` |
-| `--n` | `16` | grid side length |
-| `--x` | `200` | number of iterations |
-| `--seed` | `42` | RNG seed |
-| `--out` | `data/timeseries.csv` | output CSV path |
-| `--a`, `--xmin`, `--xmax` | `-2`, `1`, `100` | power-law parameters |
-| `--mu`, `--sigma` | `50`, `15` | Gaussian parameters |
-
-## Analyse
-
-```bash
-python analyze.py --csv data/timeseries_powerlaw.csv --z 1 --plot-dir plots/powerlaw/
-python analyze.py --csv data/timeseries_gaussian.csv --z 1 --plot-dir plots/gaussian/
-```
-
-`z = 1` is illustrative only. The whole point is to repeat the analysis across
-several tolerances, since `P(|X - Y| <= z)` behaves very differently for the
-two marginals.
-
-### What counts as a correlation
-
-A **feigned correlation** links a source site `(r, c, t)` to a descendant
-`(r', c', t+1)` when both hold:
-
-1. The descendant is in the Moore neighbourhood of the source,
-   `max(|r' - r|, |c' - c|) <= 1`. That includes staying in the same cell, so
-   a signal may hold still, move orthogonally, or move diagonally.
-2. `|v(r,c,t) - v(r',c',t+1)| <= z`.
-
-**There are no within-frame links.** Two cells observed in the same iteration
-are never connected, no matter how similar their values or how close they sit.
-If every cell at iteration `t` held an identical value, that alone would
-produce zero edges. The reasoning is that a genuinely propagating signal needs
-one time bin to move between cells.
-
-### Avalanches
-
-Each participating space-time site `(r, c, t)` is a graph node and each
-qualifying link is an edge. Edges point forward in time, but membership is
-resolved by treating them as undirected and taking connected components
-(union-find). An avalanche is one such component containing at least one edge.
-
-A front may drift, branch, merge, stay put, or return to a cell it already
-visited. Revisiting does not split the event: `A_t -> B_(t+1) -> A_(t+2)` is a
-single avalanche.
-
-Per-avalanche metrics written to `<plot-dir>/avalanches.csv`:
-
-| Metric | Definition |
+| Resource | Contents |
 | --- | --- |
-| `size` | number of participating space-time sites; the same cell at two different iterations counts twice |
-| `duration` | `t_max - t_min + 1` |
-| `spatial_extent` | number of unique `(r, c)` cells recruited |
-| `start_iteration`, `end_iteration` | `t_min`, `t_max` |
-| `edge_count` | number of feigned-correlation edges in the component |
+| [Feasibility report](feasibility/REPORT.md) | Completed experiments, findings and limitations of the original paper pitch |
+| [Reproduction guide](feasibility/README.md) | Installation, pinned environment, run stages and verification |
+| [Completed-study protocol](feasibility/PROTOCOL.md) | Experiment grid and statistical checks |
+| [Research plan](feasibility/RESEARCH_PLAN.md) | Refined question and proposed next experiments |
+| [Literature audit](feasibility/LITERATURE.md) | Primary sources and paper-to-code discrepancies |
+| [Results](feasibility/results/) | CSVs, figures, source manifests and validation logs |
 
-For `A_t -> B_(t+1) -> A_(t+2)`: `size = 3`, `duration = 3`,
-`spatial_extent = 2`.
+The recorded environment uses Python 3.12.14 on Windows. Follow the reproduction
+guide for the full study; Linux/macOS instructions are provided but untested.
+Large raw event arrays are regenerated from seeds rather than stored in Git.
 
-### Edge-rate diagnostic
+## Original experiments
 
-Before any avalanche grouping, `analyze.py` reports
+The original numerical scripts remain available as the audit baseline:
 
-```text
-R(z) = (candidate temporal pairs with |Δv| <= z) / (all candidate temporal pairs)
-```
-
-where candidates are every in-bounds Moore pair between consecutive frames.
-This is the mechanism knob: it exposes how much of the apparent structure comes
-purely from the marginal distribution. A sweep over `z` is written to
-`<plot-dir>/edge_rate_vs_z.csv` and plotted alongside, controlled by
-`--z-sweep` (comma-separated, default `0.01,0.03,0.1,0.3,1,3,10,30`).
-
-## Outputs
-
-```text
-plots/<mode>/
-├── avalanches.csv
-├── avalanches_vs_size.png
-├── avalanches_vs_duration.png
-├── avalanches_vs_spatial_extent.png
-├── edge_rate_vs_z.csv
-└── edge_rate_vs_z.png
-```
-
-Distribution plots use log-log axes over raw counts. A straight-ish line on
-log-log axes is **not** evidence of a power law; fitting and comparing against
-alternatives would be a separate exercise.
-
-## Interpreting the comparison
-
-Both modes go through the identical analysis pipeline, so the only manipulated
-variable is the IID marginal. The truncated power law with `a = -2` piles most
-of its probability near `xmin`, which makes two independent draws land within
-`z` of each other far more often than under a Gaussian spread across the same
-range. The chain being tested:
-
-```text
-IID marginal -> P(|X - Y| <= z) -> feigned links -> connected space-time
-events -> observed avalanche size and duration distributions
-```
-
----
-
-# Beggs-Plenz Replication on Null Data
-
-Beggs & Plenz (2003) report that cortical activity organises into "neuronal
-avalanches": a branching parameter `sigma` of 1.04 and a size distribution
-following a power law with exponent `tau = 3/2`, together taken as evidence
-that cortex operates at criticality.
-
-Their avalanche definition has one free parameter, the bin width `dt`, which
-they set to `IEI_avg`, the mean interval between events anywhere on the array.
-This pipeline reimplements their method faithfully and runs it on data built to
-contain **no propagation whatsoever**, sweeping `dt` to separate results that
-reflect the data from results that reflect the binning choice.
-
-## The headline result
-
-A bursty null with zero electrode-to-electrode propagation reproduces the
-published signature exactly:
-
-| Condition | `dt` | `sigma` | `tau` | Beats an exponential? |
-| --- | --- | --- | --- | --- |
-| Beggs & Plenz 2003 | `IEI_avg` ≈ 4 ms | 1.04 ± 0.19 | 1.5 | not tested |
-| **Bursty null, mixed intensity** | **10 ms** | **0.986** | **1.526** | **yes, z = +34.5** |
-| Critical branching (positive control) | 4 ms | 1.001 | 1.478 | yes, z = +152.7 |
-| Homogeneous null | any | reaches 1 at 64 ms | never 1.5 together | **no, at any `dt`** |
-| Bursty null, uniform intensity | any | reaches 1 at 5 ms | never 1.5 together | **no, at any `dt`** |
-
-In that bursty null every electrode is conditionally independent given a shared
-global drive. Nothing propagates. The `(sigma, tau) = (1, 3/2)` signature still
-appears, and the size distribution genuinely beats an exponential.
-
-![phase comparison](plots/bp_comparison/phase_comparison.png)
-
-Position in this plane is not the evidence: every trajectory sweeps past the
-critical point at some bin width. The filled markers are what matters, showing
-where the size distribution actually outperforms an exponential.
-
-## What this does and does not say about the paper
-
-Three findings cut in the paper's favour:
-
-- **A homogeneous Poisson null never produces a power law.** Its Vuong statistic
-  is negative at every bin width tested, from 1 to 128 ms. Independence alone is
-  not enough to manufacture `tau = 3/2`.
-- **Bursting alone is not enough either.** A telegraph drive with uniform burst
-  intensity, matched to their `IEI_avg` of about 4.2 ms, still fails at every bin
-  width. Reproducing the exponent needed a *broad spread of burst intensities*,
-  not merely synchrony.
-- **The paper's own bin rule does not select the artifact.** At `dt = IEI_avg`
-  the mixed-intensity null gives `sigma = 0.605` and `tau = 2.02`, nowhere near
-  the signature. Reaching it required `dt = 10 ms`, roughly 2.2x `IEI_avg`. Their
-  prescription is not free to be tuned, and on this dataset it would not have
-  produced the false positive.
-
-Two findings cut against it:
-
-- **`sigma` is close to worthless on its own.** For independent data the
-  branching parameter is exactly the mean number of events per bin, so
-  `sigma = rate x dt`. Binning at the mean inter-event interval forces
-  `sigma = 1` by arithmetic. `bp_validate.py` confirms this to within 1 percent
-  at four bin widths and shows independent data hitting `sigma = 0.9956` at
-  `dt = 62 ms` while remaining decisively non-power-law. Their measured 1.04 is
-  what the binning convention guarantees, whatever the tissue is doing.
-- **Their jitter control cannot detect a false power law.** Jittering the
-  positive control by 4 ms drops `sigma` from 1.00 to 0.61, yet the size
-  distribution still beats an exponential at z = +196; at 80 ms jitter it is
-  still z = +314. The paper applies jitter only to `sigma`, and our results show
-  that is the only quantity it tests. A full time shuffle does destroy the
-  signature (z = +153 to -180), so it is the far stronger control.
-
-The net position: the branching parameter is an artifact of the binning
-convention, but `tau = 3/2` is a real constraint that most nulls fail. It is
-not, however, unique to propagating systems, and the paper does not report a
-model comparison that would separate a power law from the alternatives.
-
-## Two methodological cautions
-
-**A straight line on log-log axes is not a power law.** Exponentially
-distributed samples fed to log-log regression return "exponents" of 1.75 and
-3.58 with R² above 0.81, while the Vuong test correctly rejects them. The MLE is
-no safer used alone: on homogeneous null data it returns `tau = 1.398`, which
-reads like 3/2, while the model comparison rejects the power law at z = -405.
-Only the comparison is informative.
-
-**Fits must stop short of the array size.** A bounded array puts a spike of
-probability at exactly its own limit, since every cascade that would have grown
-larger is truncated to land there. In the positive control, size 60 carries 1541
-counts against about 10 for sizes 53-59. Fitting across that spike returns
-`tau = 1.41`; fitting below it returns 1.478 with R² = 0.9998. Both are reported,
-as `tau_regression` and `tau_regression_to_cutoff`.
-
-## Generate
-
-```bash
-python bp_simulate.py --mode homogeneous --hours 70 --out data/bp_homogeneous.npz
-python bp_simulate.py --mode bursty      --hours 70 --out data/bp_bursty.npz
-python bp_simulate.py --mode bursty --burst-intensity-sigma 1.0 --hours 70 \
-    --out data/bp_bursty_het.npz
-python bp_simulate.py --mode critical    --hours 70 --out data/bp_critical.npz
-```
-
-Each run produces about 4 million events over 70 simulated hours, written as a
-compressed `.npz` of roughly 37 MB holding `electrode`, `time_ms`, `amplitude`
-and a JSON metadata blob.
-
-### Generator modes
-
-| Mode | Propagation | Description |
-| --- | --- | --- |
-| `homogeneous` | none | every electrode fires independently at a constant rate |
-| `bursty` | none | a shared telegraph drive gates conditionally independent electrodes |
-| `critical` | yes | Galton-Watson cascades; the positive control |
-
-`--burst-intensity-sigma` is the knob that matters for the bursty null. A run
-inside a burst of occupancy `lambda` is geometric with scale `1/(1 - lambda)`
-below one and effectively unbounded above one, so spreading `lambda` across that
-boundary mixes wildly different scales. The spread is lognormal, deliberately
-chosen as broad but not itself a power law, so nothing was injected by hand.
-`--burst-duration-sigma` spreads burst lengths instead and barely matters, since
-an avalanche ends at the first empty bin regardless of how long the burst runs.
-
-### Parameters matched to the paper
-
-| Quantity | Value |
+| Scripts | Purpose |
 | --- | --- |
-| Electrodes | 60 (8x8 minus corners) |
-| Time resolution | 1 ms |
-| Refractory period | 20 ms per electrode |
-| Array-wide rate | 58,000 events/hour |
-| Burst duty cycle | 6.8 percent, ~150 ms bursts, giving `IEI_avg` ≈ 4.5 ms against their 4.2 ms |
+| `simulate.py`, `analyze.py` | Apply a local similarity criterion to IID grid values and group the resulting links into events. This is a separate exploratory experiment. |
+| `bp_simulate.py`, `bp_analyze.py` | Generate event trains and sweep bin widths using selected Beggs-Plenz-style avalanche statistics. |
+| `bp_compare.py` | Compare the original bin sweeps. |
+| `bp_validate.py` | Run the original 50 implementation checks. |
+| `feasibility/` | Add multi-seed experiments, statistical checks, propagation-control sensitivities and the written audit. |
 
-Amplitudes are the supra-threshold values, drawn exactly from the tail of the
-chosen marginal. For a power law the tail is another power law with the same
-exponent, so amplitudes span 3,710 to 999,890, matching the several orders of
-magnitude the paper describes. A Gaussian marginal at the same event rate yields
-a threshold of 3.46 SD and amplitudes spanning only 3.46 to 6.09, which is why
-`--amp-dist` changes the amplitude-weighted result so sharply.
-
-## Analyse
+Example commands for the original event-train workflow, after installing the
+pinned dependencies in the reproduction guide:
 
 ```bash
+python bp_simulate.py --mode bursty --burst-intensity-sigma 1.0 --hours 3 --out data/bp_bursty_het.npz
 python bp_analyze.py --events data/bp_bursty_het.npz --plot-dir plots/bp_bursty_het/
-python bp_analyze.py --events data/bp_critical.npz --native-bin-ms 4 \
-    --plot-dir plots/bp_critical/
-python bp_analyze.py --events data/bp_critical.npz --control shuffle \
-    --plot-dir plots/bp_critical_shuffle/
-
-python bp_compare.py     # overlays every sweep onto one comparison
-python bp_validate.py    # 50 correctness checks; run before trusting anything
+python bp_validate.py
 ```
 
-### What counts as an avalanche
+The detector groups consecutive occupied time bins bracketed by empty bins.
+Count-based size sums events, including repeated activations. The repository's
+IEI rule conditions on gaps up to a fixed 200 ms cutoff. The legacy `critical`
+generator prevents electrode reuse for an entire cascade; that label is not
+validation of its dynamical state. See the literature audit for these and other
+observation-model differences from the experimental paper.
 
-Their definition is purely temporal, and spatial adjacency plays no part; the
-paper itself reports a contiguity index of only 39 percent, meaning activity
-usually skips its nearest neighbours. Events are binned at width `dt`, and an
-avalanche is a maximal run of consecutively occupied bins bracketed by empty
-ones. A single occupied bin between two empty ones is a valid avalanche.
+## Historical claims
 
-| Metric | Definition |
-| --- | --- |
-| `size` | total electrode activations in the run, counting repeats, which is why sizes can exceed 60 |
-| `duration` | number of bins spanned |
-| `amplitude_size` | summed amplitude, their second size definition |
-| `sigma_single` | mean descendants per ancestor across the first two bins, restricted to single-ancestor avalanches |
-| `sigma_multi` | ancestor-weighted variant carrying their availability correction `(nmax - 1) / (nmax - na)` |
+The [original README](https://github.com/Yawsom/null-avalanche-controls/blob/e3b00e4b65441da751de17f35b84f2044be41d15/README.md)
+is preserved in Git history as the initial interpretation, not the current
+conclusion. It claimed exact reproduction of a critical signature, a faithful
+experimental replication and a universal binning guarantee for sigma. The audit
+does not support those claims as stated. In particular, the independent-Poisson
+identity for the single-ancestor estimator does not extend to arbitrary neural
+dynamics or force unity under the conditional IEI rule.
 
-### Analysis flags
+The completed report's recommendation against the original manuscript pitch
+applies to that specific claim. It does not imply that bin-width dependence is
+absent or that the refined research question is not worth investigating.
 
-| Flag | Default | Meaning |
-| --- | --- | --- |
-| `--events` | required | `.npz` from `bp_simulate.py` |
-| `--plot-dir` | required | output directory |
-| `--bins-ms` | `1,...,128` | bin widths to sweep |
-| `--tmax-ms` | `200` | truncation for the conditional `IEI_avg` |
-| `--native-bin-ms` | `0` | summarise at this width instead of the `IEI_avg` one |
-| `--fit-max` | `0` | largest size in the fit; 0 uses half the electrode count |
-| `--control` | `none` | `none`, `jitter` or `shuffle` |
-| `--jitter-ms` | `4` | jitter magnitude |
+## License
 
-`IEI_avg` is recomputed per dataset as the conditional mean under `--tmax-ms`,
-replicating their procedure rather than hardcoding 4.2 ms. Controls re-enter the
-identical binning path and have `IEI_avg` recomputed on the surrogate.
-
-## Outputs
-
-```text
-plots/bp_<condition>/
-├── bin_sweep.csv                     # one row per dt: sigma, tau, Vuong, counts
-├── bin_sweep.png
-├── avalanches_at_iei.csv
-├── size_distribution.png
-├── duration_distribution.png
-├── amplitude_size_distribution.png
-└── phase_trajectory.png
-
-plots/bp_comparison/
-├── phase_comparison.png              # all conditions, Figure 7D style
-├── vuong_vs_binwidth.png
-└── summary.csv
-```
-
-## A caveat on the generators
-
-The bursty modes lose events to the refractory period, since bursts concentrate
-activity: the uniform-intensity null realises 53,804 events/hour against the
-58,000 target, and the mixed-intensity null 49,549. Rates are reported on every
-run. The deficit is not corrected because `IEI_avg` is recomputed per dataset, so
-each condition is analysed at its own appropriate bin width, and the spread is
-far smaller than the 10,000 to 240,000 per hour range across their own cultures.
-
-The positive control bars an electrode from being recruited twice within one
-cascade. This follows from the 20 ms refractory period, as avalanches are much
-shorter than that, and it supplies the cutoff at the array size that the paper
-measures. It matters for a second reason: at `sigma` exactly 1 an unrestricted
-critical process wanders unboundedly before dying, and on a 60-electrode array
-it settles into a self-sustaining state producing single cascades of over
-170,000 events. Exhausting the array is what actually terminates it.
+[Apache License 2.0](LICENSE).
