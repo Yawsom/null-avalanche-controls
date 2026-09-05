@@ -1,0 +1,66 @@
+
+Samplers
+  [pass] norm_ppf median
+  [pass] norm_ppf 97.5th
+  [pass] norm_ppf 0.1th
+  [pass] powerlaw icdf median a=-2
+  [pass] powerlaw icdf endpoints
+  [pass] powerlaw icdf median a=-1
+
+Refractory period
+  [pass] greedy keeps 0 and 25  [np.int64(0), np.int64(25)]
+  [pass] window is per electrode  kept 3 of 3
+  [pass] boundary at exactly 20 ms is kept
+
+Avalanche detection on hand-built trains
+  [pass] three avalanches  3
+  [pass] sizes  [6, 1, 3]
+  [pass] durations  [3, 1, 2]
+  [pass] ancestors  [2, 1, 2]
+  [pass] descendants  [1, 0, 1]
+  [pass] single frame counts as an avalanche
+  [pass] size counts repeat activations
+  [pass] one empty bin splits
+  [pass] adjacent bins merge
+  [pass] wider bin merges the split
+  [pass] amplitude_size sums the run
+  [pass] events conserved at dt=1
+  [pass] events conserved at dt=3
+  [pass] events conserved at dt=7
+
+Branching parameter
+  [pass] single ancestor mean  1.0000
+  [pass] multi ancestor with correction  1.5172 vs 1.5172
+  [pass] saturated avalanche excluded  1.0000
+
+Exponent fitting
+  [pass] MLE recovers tau=1.5  got 1.5028
+  [pass] Vuong favours power law at tau=1.5  z=158.9
+  [pass] MLE recovers tau=2.0  got 1.9958
+  [pass] Vuong favours power law at tau=2.0  z=110.0
+  [pass] MLE recovers tau=2.5  got 2.4962
+  [pass] Vuong favours power law at tau=2.5  z=63.4
+  [pass] Vuong rejects power law for exponential rate=0.1  z=-145.7
+  [pass] regression still reports an exponent at rate=0.1  tau=1.748
+  [pass] Vuong rejects power law for exponential rate=0.3  z=-181.4
+  [pass] regression still reports an exponent at rate=0.3  tau=3.583
+
+Analytical prediction: independent data gives sigma = rate x dt
+  [pass] sigma matches rate x dt at dt=20 ms  measured 0.3178 vs predicted 0.3200
+  [pass] sigma matches rate x dt at dt=40 ms  measured 0.6418 vs predicted 0.6401
+  [pass] sigma matches rate x dt at dt=62 ms  measured 0.9956 vs predicted 0.9921
+  [pass] sigma matches rate x dt at dt=80 ms  measured 1.2887 vs predicted 1.2801
+  [pass] independent data reaches sigma=1 at dt=62 ms  sigma=0.9956
+  [pass] independent data is still not a power law  Vuong z=-133.8
+
+Positive control: a true branching process must be recovered
+  [pass] critical sigma near 1  1.0080
+  [pass] critical tau near 1.5 by regression  1.4562
+  [pass] critical tau near 1.5 by MLE  1.4564
+  [pass] critical data reads as a power law  Vuong z=32.5
+  [pass] fitting across the cutoff biases tau downward  1.4062 spanning vs 1.4562 below cutoff
+  [pass] shuffle collapses sigma  0.0650
+  [pass] shuffle destroys the power law  z=-38.6
+  [pass] shuffle shrinks the largest avalanche  5 vs 60
+
+all checks passed

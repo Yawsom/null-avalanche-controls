@@ -1,0 +1,17 @@
+{
+  "main_kernel_hashes": true,
+  "long_kernel_hashes": true,
+  "controls_kernel_hashes": true,
+  "calibration_kernel_hashes": true,
+  "280_main_recordings": true,
+  "20_seeds_each_cell": true,
+  "no_duplicate_sweeps": true,
+  "2800_fit_rows": true,
+  "60_long_fit_rows": true,
+  "420_interval_tests": true,
+  "300_calibration_samples": true,
+  "no_lognormal_bounds": true,
+  "bootstrap_p_range": true,
+  "legacy_checks_pass": true,
+  "eight_new_tests_pass": true
+}

@@ -1,3 +1,9 @@
+> **Feasibility audit, 5 September 2026:** The multi-seed study in
+> [feasibility/REPORT.md](feasibility/REPORT.md) reproduces the numerical headline
+> below but finds that its power-law/criticality interpretation is not supported
+> by the stronger checks. Read that report before citing the original claims.
+> The original experiment descriptions below are retained as the audit baseline.
+
 This repository holds two separate experiments that share a theme. Both ask
 whether an analysis method reports structure in data that has none.
 

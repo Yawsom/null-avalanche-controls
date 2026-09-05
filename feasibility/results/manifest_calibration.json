@@ -1,0 +1,58 @@
+{
+  "stage": "calibration",
+  "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "numpy": "2.5.2",
+  "pandas": "3.0.5",
+  "scipy": "1.18.1",
+  "base_commit": "e3b00e4b65441da751de17f35b84f2044be41d15",
+  "source_sha256": {
+    "bp_simulate.py": "a524cbc216be795fd0ee3612dd7398a08c143bf2c926ab21edf5790d936a3be4",
+    "bp_analyze.py": "89fbee6305d52e668a86f49ea6fb8b5645bb0b96853b05b358148344c66bcd33",
+    "bp_validate.py": "cba7d1c7560a1c8df9dc50e6e732dcea2f6170713d66730a608f4efa0f38cb71",
+    "simulate.py": "41ee49971bc0464ccea8ab94a81f82a36d51df44a1803b25cf2e9528051d18ce",
+    "feasibility\\methods.py": "a66d41cf93265365a9d6ea34ad9cd76b5dad16d8396efe5a84d2fc28598d60f6",
+    "feasibility\\run.py": "e9771665f974ceafa9142621a618aaeed0244a08c85de942825948901e9c773d",
+    "feasibility\\summarize.py": "c4599304da78347e2bdd253adde7a6acb90ae36de518483fd4595d0b588b31df",
+    "feasibility\\test_methods.py": "febf390acc1feb0294c3b4f8926c33bada8577866d716cb57f1c6920b61ab357",
+    "feasibility\\__init__.py": "c5b4731ff601f0fab9a6a15bb709d9f963a39ec9c006d1ca31a786df859b76b2",
+    "feasibility\\PROTOCOL.md": "887af947f0c2f18616e41b0c74184a416ca26d13d1226ace5bcf73d98f879aa7"
+  },
+  "seeds": [
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119
+  ],
+  "hours": [
+    0.25,
+    3.0
+  ],
+  "bootstrap_replicates": 199,
+  "interval_replicates": 99,
+  "conditions": [
+    "homogeneous",
+    "uniform",
+    "mixed",
+    "capped",
+    "refractory_0.8",
+    "refractory_1.0",
+    "refractory_1.2"
+  ]
+}

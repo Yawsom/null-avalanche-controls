@@ -1,0 +1,13 @@
+test_block_resampling_identical_blocks (feasibility.test_methods.MethodsTests.test_block_resampling_identical_blocks) ... ok
+test_exact_powerlaw_and_alternative (feasibility.test_methods.MethodsTests.test_exact_powerlaw_and_alternative) ... ok
+test_lag_statistic_against_dense (feasibility.test_methods.MethodsTests.test_lag_statistic_against_dense) ... ok
+test_mle_independent_optimizer (feasibility.test_methods.MethodsTests.test_mle_independent_optimizer) ... ok
+test_partition_and_float_bins (feasibility.test_methods.MethodsTests.test_partition_and_float_bins) ... ok
+test_real_refractory_and_finite_span (feasibility.test_methods.MethodsTests.test_real_refractory_and_finite_span) ... ok
+test_reject_bad_input (feasibility.test_methods.MethodsTests.test_reject_bad_input) ... ok
+test_surrogate_preserves_window_and_count (feasibility.test_methods.MethodsTests.test_surrogate_preserves_window_and_count) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.111s
+
+OK
